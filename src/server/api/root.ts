@@ -1,4 +1,4 @@
-import { postRouter } from "@goober/server/api/routers/post";
+import { usersRouter } from "@goober/server/api/routers/users";
 import { createCallerFactory, createTRPCRouter } from "@goober/server/api/trpc";
 
 /**
@@ -7,7 +7,7 @@ import { createCallerFactory, createTRPCRouter } from "@goober/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
+  users: usersRouter,
 });
 
 // export type definition of API
