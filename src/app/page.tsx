@@ -1,6 +1,5 @@
 "use client";
 
-import NavBar from './components/NavBar';
 import { CreateUser } from './components/create-user';
 import Map from './components/map';
 import User from './components/user';
@@ -20,4 +19,5 @@ export default function Index() {
     </div>
   )
 }
+
 

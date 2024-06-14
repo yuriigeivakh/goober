@@ -9,6 +9,7 @@ import Toast from '../components/Toast';
 import { RideStatus } from '@prisma/client';
 import { useCurrentUser } from '../hooks/useUser';
 import pusher from '../lib/pusher';
+import User from '../components/user';
 
 interface Ride {
     id: string
@@ -31,6 +32,7 @@ export default function Driver() {
       });
     const [driverLocation, setDriverLocation] = useState<[number, number] | null>(null)
     const [showToast, setShowToast] = useState(false);
+    const [isCancelled, setIsCancelled] = useState(false);
     const [ride, setRide] = useState<Ride | null>(null)
     const [channelPusher, setChannelPusher] = useState<any>(null);
 
@@ -81,6 +83,7 @@ export default function Driver() {
     };
 
     const handleChangeStatusRide = async (rideStatus: RideStatus = RideStatus.CANCELLED) => {
+        console.warn(rideStatus, 'rideStatus')
         await updatedRideStatus.mutate({
             rideId: ride?.id as string,
             driverId: user?.id,
@@ -88,13 +91,30 @@ export default function Driver() {
         });
         if (rideStatus !== RideStatus.IN_PROGRESS) {
             setRide(null)
+        } else {
+            channelPusher.bind(`ride-${ride?.id}`, function (data: any) {
+                console.warn('subsribed', data)
+                if (data.status === RideStatus.CANCELLED) {
+                    setIsCancelled(true)
+                }
+            });
         }
         handleCloseToast()
     }
-    console.warn(ride, 'ride', showToast)
+
+    const resetState = () => {
+        setRide(null)
+        setIsCancelled(false)
+        setShowToast(false)
+    }
 
     return (
         <div className="relative w-screen" style={{height: 'calc(100vh - 72px)'}}>
+            {user?.name ? (
+                <User name={user?.name} role={user?.role}/>
+            ) : (
+                <CreateUser />
+            )}
             <Map
                 {...viewport}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
@@ -140,6 +160,9 @@ export default function Driver() {
                 {!showToast && ride && (
                     <>
                         <div className='p-4'>
+                            <p className="mb-6 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
+                                Your order {isCancelled ? 'cancelled' : 'details'}
+                            </p>
                             <p>Distance: {ride?.distance.toFixed(2)} km</p>
                             <p>Pickup: {ride?.pickupAddress}</p>
                             <p>Drop off: {ride?.dropoffAddress}</p>
@@ -147,8 +170,14 @@ export default function Driver() {
                             <p>Est time: {ride?.estimatedTime.toFixed(0)} minutes</p>
                         </div>
                         <div className='flex justify-around p-4'>
-                            <button onClick={() => handleChangeStatusRide(RideStatus.FINISHED)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Finish</button>
-                            <button onClick={() => handleChangeStatusRide(RideStatus.CANCELLED)} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
+                            {isCancelled ? (
+                                <button onClick={resetState} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Close</button>
+                            ) : (
+                                <>
+                                    <button onClick={() => handleChangeStatusRide(RideStatus.FINISHED)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Finish</button>
+                                    <button onClick={() => handleChangeStatusRide(RideStatus.CANCELLED)} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
+                                </>
+                            )}
                         </div>
                     </>
                 )}

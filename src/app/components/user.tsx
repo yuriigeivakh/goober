@@ -1,7 +1,9 @@
 "use client";
 import { type UserRole } from "@prisma/client";
-import { useEffect, useState } from "react";
-import { Avatar, Divider, Collapse, Button } from '@chakra-ui/react'
+import { useEffect, useState, useRef } from "react";
+import autoAnimate from '@formkit/auto-animate'
+
+import { Avatar, Divider, Collapse } from '@chakra-ui/react'
 import classNames from 'classnames';
 
 import { deleteIndexedDBUser } from "../utils";
@@ -14,12 +16,18 @@ interface UserProps {
 const User: React.FC<UserProps> = ({ name, role }) => {
     const [isToggle, setIsToggle] = useState(false);
 
+    const userRef = useRef(null)
+  
+    useEffect(() => {
+      userRef.current && autoAnimate(userRef.current)
+    }, [parent])
+
     const handleLogout = () => {
       window.dispatchEvent(new Event('userLogout'));
     }
 
     return (
-      <div className={classNames('flex flex-col gap-2 absolute top-4 left-4 z-20 bg-slate-50 p-4 transition-all duration-500 ease-in-out', {
+      <div ref={userRef} className={classNames('flex flex-col gap-2 absolute top-4 left-4 z-20 bg-slate-50 p-4 transition-all duration-500 ease-in-out', {
         'rounded-md': isToggle,
         'rounded-full': !isToggle,
       })}>

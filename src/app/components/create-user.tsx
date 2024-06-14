@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "@goober/trpc/react";
 import { UserRole } from "@prisma/client";
@@ -9,6 +9,7 @@ import { setIndexedDBUser } from "../utils";
 import { useCurrentUser } from "../hooks/useUser";
 import { COMMON_ERROR_MESSAGE } from "../constants";
 import Toast from "./Toast";
+import autoAnimate from "@formkit/auto-animate";
 
 export function CreateUser() {
   const router = useRouter();
@@ -16,6 +17,11 @@ export function CreateUser() {
   const [role, setRole] = useState<UserRole>(UserRole.RIDER);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const createUserRef = useRef(null)
+  
+  useEffect(() => {
+    createUserRef.current && autoAnimate(createUserRef.current)
+  }, [parent])
 
   const createPost = api.users.create.useMutation({
     onMutate: () => {
@@ -47,7 +53,7 @@ export function CreateUser() {
   }
 
   return (
-    <div className="absolute top-4 left-4 z-50 w-[300px] max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+    <div ref={createUserRef} className="absolute top-4 left-4 z-50 w-[300px] max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
       <input 
         type="text" 
         id="name" 
@@ -70,7 +76,7 @@ export function CreateUser() {
       )}
       <button
         className="text-gray-900 w-full mt-4 cursor-pointer bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2"
-        disabled={!name || createPost.isPending}
+        disabled={name.length < 2 || createPost.isPending}
         onClick={handleSubmit}
       >
         {createPost.isPending ? "Submitting..." : "Submit"}

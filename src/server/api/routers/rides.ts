@@ -62,15 +62,18 @@ export const ridesRouter = createTRPCRouter({
       const data: Partial<Ride> = {};
       if (status) {
         data.status = status;
-        if (status !== RideStatus.REJECTED && driverId) {
-          const driver = await ctx.db.user.findUnique({
-            where: { id: driverId },
-          });
+        if (status !== RideStatus.REJECTED) {
+          let driver
+          if (driverId) {
+            driver = await ctx.db.user.findUnique({
+              where: { id: driverId },
+            });
+          }
 
           await pusher.trigger("goober", `ride-${rideId}`, {
             id: rideId,
             status,
-            driverName: driver?.name, 
+            ...(driver && { driverName: driver?.name, }),
           });
         }
       }

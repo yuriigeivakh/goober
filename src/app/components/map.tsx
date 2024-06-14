@@ -2,15 +2,17 @@
 'use client'
 import { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import Map, { Marker, Source, Layer } from 'react-map-gl';
 import { AddressAutofill } from '@mapbox/search-js-react'
 import { number, any } from 'zod';
+import autoAnimate from '@formkit/auto-animate'
+import { api } from '@goober/trpc/react';
+
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { MarkerSvg, TargetLocationSvg } from '../assets';
 import RouteAndAddressInfo from './RouteAndAddressInfo';
 import CarRouteLayer from './CarRouteLayer';
 import MarkersLayer from './MarkersLayer';
-import { api } from '@goober/trpc/react';
 import { getPrice } from '../utils';
 import pusher from '../lib/pusher';
 import { RideStatus } from '@prisma/client';
@@ -47,7 +49,10 @@ const MapPage = ({ userId }: { userId?: string }) => {
     const [routeDistance, setRouteDistance] = useState<number | null>(null);
     const [routeDuration, setRouteDuration] = useState<number | null>(null);
     const [channelPusher, setChannelPusher] = useState<any>(null);
+    const [rideCreated, setRideCreated] = useState<boolean>(false);
     const [rideInformation, setRideInformation] = useState<RideInformation | null>(null);
+    const buttonSubmit = useRef(null)
+    const distanceRef = useRef(null)
 
     const initialize = async () => {
       navigator.geolocation.getCurrentPosition(async (position: any) => {
@@ -84,6 +89,11 @@ const MapPage = ({ userId }: { userId?: string }) => {
           .catch((error) => console.error('Error setting car route:', error));
       }
     }, [startLocation, dropoffLocation]);
+
+    useEffect(() => {
+      parent.current && autoAnimate(parent.current)
+      distanceRef.current && autoAnimate(distanceRef.current)
+    }, [parent])
 
     const fetchCarRoute = async (startLocation: [number, number], dropoffLocation: [number, number]): Promise<[number, number][]> => {
       try {
@@ -189,9 +199,8 @@ const MapPage = ({ userId }: { userId?: string }) => {
 
     const createRide = api.rides.create.useMutation({
       onSuccess: async (data) => {
-        console.warn(data, 'data')
+        setRideCreated(true)
         channelPusher.bind(`ride-${data?.id}`, function (data: any) {
-          console.warn('subsribed', data)
           setRideInformation(data)
         });
         return data
@@ -245,7 +254,9 @@ const MapPage = ({ userId }: { userId?: string }) => {
       setRouteDuration(null)
       setDropoffLocation(null)
       setDropOffAddress('')
+      setRideCreated(false)
     }
+    console.warn(rideInformation?.status === RideStatus.FINISHED || rideInformation?.status === RideStatus.CANCELLED, userId, 'rideInformation?.status')
   
     return (
       <>
@@ -302,32 +313,43 @@ const MapPage = ({ userId }: { userId?: string }) => {
           {userId && (
             <>
               <div>
+                {rideInformation?.status === RideStatus.FINISHED && (
+                  <>
+                    <div>Your ride was finished! we hope you enjoyed your ride, see you soon</div>
+                    <button onClick={resetState} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Order new ride</button>
+                  </>
+                )}
+                {rideInformation?.status === RideStatus.CANCELLED && (
+                  <>
+                    <div>Your ride was cancelled for some reason</div>
+                    <button onClick={resetState} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Order new ride</button>
+                  </>
+                )}
+                {!rideInformation?.status && rideCreated && (
+                  <div>Your ride was created! Please wait until driver confirm</div>
+                )}
                 {rideInformation?.status === RideStatus.IN_PROGRESS && (
                   <>
                     <div>Your ride just confirmed, your driver - {rideInformation.driverName} should be soon!</div>
                     <button onClick={handleChangeStatusRide} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel ride</button>
                   </>
                 )}
-                {rideInformation?.status === RideStatus.FINISHED || rideInformation?.status === RideStatus.CANCELLED  && (
-                  <>
-                    <div>Your ride was {rideInformation?.status.toLocaleUpperCase()}</div>
-                    <button onClick={resetState} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Order new ride</button>
-                  </>
-                )}
               </div>
-              <RouteAndAddressInfo
-                accessToken={mapboxgl.accessToken}
-                routeDistance={routeDistance}
-                routeDuration={routeDuration}
-                startAddress={startAddress}
-                dropOffAddress={dropOffAddress}
-                handleStartLocationChange={handleStartLocationChange}
-                handleDropoffLocationChange={handleDropoffLocationChange}
-                handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
-                dropOffLocationRef={dropOffLocationRef}
-              />
+              <div ref={distanceRef}>
+                <RouteAndAddressInfo
+                  accessToken={mapboxgl.accessToken}
+                  routeDistance={routeDistance}
+                  routeDuration={routeDuration}
+                  startAddress={startAddress}
+                  dropOffAddress={dropOffAddress}
+                  handleStartLocationChange={handleStartLocationChange}
+                  handleDropoffLocationChange={handleDropoffLocationChange}
+                  handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
+                  dropOffLocationRef={dropOffLocationRef}
+                />
+              </div>
               {startAddress && dropOffAddress && (
-                <button className="text-white mt-2 w-full bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
+                <button ref={buttonSubmit} className="text-white mt-2 w-full bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
               )}
             </>
           )}
