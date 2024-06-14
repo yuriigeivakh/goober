@@ -12,7 +12,15 @@ import CarRouteLayer from './CarRouteLayer';
 import MarkersLayer from './MarkersLayer';
 import { api } from '@goober/trpc/react';
 import { getPrice } from '../utils';
+import pusher from '../lib/pusher';
+import { RideStatus } from '@prisma/client';
 // import { Button } from '@chakra-ui/react';
+
+interface RideInformation {
+  id: string
+  status: RideStatus
+  driverName: string
+}
 
 mapboxgl.accessToken =
   process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -38,6 +46,8 @@ const MapPage = ({ userId }: { userId?: string }) => {
     const [carRoute, setCarRoute] = useState<[number, number][] | null>(null);
     const [routeDistance, setRouteDistance] = useState<number | null>(null);
     const [routeDuration, setRouteDuration] = useState<number | null>(null);
+    const [channelPusher, setChannelPusher] = useState<any>(null);
+    const [rideInformation, setRideInformation] = useState<RideInformation | null>(null);
 
     const initialize = async () => {
       navigator.geolocation.getCurrentPosition(async (position: any) => {
@@ -58,6 +68,13 @@ const MapPage = ({ userId }: { userId?: string }) => {
     useEffect(() => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       initialize()
+
+      const pusherChannel = pusher?.subscribe('goober');
+      setChannelPusher(pusherChannel);
+
+      return () => {
+        pusher.unsubscribe('goober');
+      };
     }, []);
 
     useEffect(() => {
@@ -67,7 +84,6 @@ const MapPage = ({ userId }: { userId?: string }) => {
           .catch((error) => console.error('Error setting car route:', error));
       }
     }, [startLocation, dropoffLocation]);
-
 
     const fetchCarRoute = async (startLocation: [number, number], dropoffLocation: [number, number]): Promise<[number, number][]> => {
       try {
@@ -173,16 +189,20 @@ const MapPage = ({ userId }: { userId?: string }) => {
 
     const createRide = api.rides.create.useMutation({
       onSuccess: async (data) => {
-        // alert(data)
+        console.warn(data, 'data')
+        channelPusher.bind(`ride-${data?.id}`, function (data: any) {
+          console.warn('subsribed', data)
+          setRideInformation(data)
+        });
+        return data
       },
       onError: (error) => {
         console.error(error)
-      }
+      },
     });
 
     const handleCreateRide = async () => {
       try {
-        console.warn(userId, getPrice(routeDistance, routeDuration), routeDistance, routeDuration, startAddress)
         await createRide.mutate({
           userId: userId,
           price: getPrice(routeDistance, routeDuration),
@@ -200,6 +220,32 @@ const MapPage = ({ userId }: { userId?: string }) => {
         alert('Error creating ride. Please try again.');
       }
     };
+    
+    const updatedRideStatus = api.rides.updateStatusAndDriver.useMutation({
+      onSuccess: async (data) => {
+          console.warn('success')
+      },
+      onError: (error) => {
+          console.error(error)
+      }
+    });
+
+    const handleChangeStatusRide = async () => {
+      await updatedRideStatus.mutate({
+        rideId: rideInformation?.id as string,
+        status: RideStatus.CANCELLED,
+      });
+      resetState()
+    }
+
+    const resetState = () => {
+      setRideInformation(null)
+      setCarRoute(null)
+      setRouteDistance(null)
+      setRouteDuration(null)
+      setDropoffLocation(null)
+      setDropOffAddress('')
+    }
   
     return (
       <>
@@ -255,6 +301,20 @@ const MapPage = ({ userId }: { userId?: string }) => {
         <div className="absolute bottom-0 left-0 p-4 bg-white shadow-lg z-10 w-full">
           {userId && (
             <>
+              <div>
+                {rideInformation?.status === RideStatus.IN_PROGRESS && (
+                  <>
+                    <div>Your ride just confirmed, your driver - {rideInformation.driverName} should be soon!</div>
+                    <button onClick={handleChangeStatusRide} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel ride</button>
+                  </>
+                )}
+                {rideInformation?.status === RideStatus.FINISHED || rideInformation?.status === RideStatus.CANCELLED  && (
+                  <>
+                    <div>Your ride was {rideInformation?.status.toLocaleUpperCase()}</div>
+                    <button onClick={resetState} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Order new ride</button>
+                  </>
+                )}
+              </div>
               <RouteAndAddressInfo
                 accessToken={mapboxgl.accessToken}
                 routeDistance={routeDistance}

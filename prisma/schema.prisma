@@ -17,6 +17,7 @@ enum UserRole {
 
 enum RideStatus {
   PENDING
+  REJECTED
   IN_PROGRESS
   CANCELLED
   FINISHED

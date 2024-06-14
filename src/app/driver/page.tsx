@@ -32,10 +32,13 @@ export default function Driver() {
     const [driverLocation, setDriverLocation] = useState<[number, number] | null>(null)
     const [showToast, setShowToast] = useState(false);
     const [ride, setRide] = useState<Ride | null>(null)
+    const [channelPusher, setChannelPusher] = useState<any>(null);
+
     const user = useCurrentUser();
 
     useEffect(() => {
-        const channel = pusher.subscribe("goober"); 
+        const channel = pusher?.subscribe("goober"); 
+        setChannelPusher(channel);
 
         channel.bind("ride", function (data: any) {
             setRide(data)
@@ -77,14 +80,18 @@ export default function Driver() {
         setShowToast(false);
     };
 
-    const handleChangeStatusRide = async (isApproved?: boolean) => {
+    const handleChangeStatusRide = async (rideStatus: RideStatus = RideStatus.CANCELLED) => {
         await updatedRideStatus.mutate({
             rideId: ride?.id as string,
             driverId: user?.id,
-            status: isApproved ? RideStatus.IN_PROGRESS : RideStatus.CANCELLED,
+            status: rideStatus,
         });
-        // handleCloseToast()
+        if (rideStatus !== RideStatus.IN_PROGRESS) {
+            setRide(null)
+        }
+        handleCloseToast()
     }
+    console.warn(ride, 'ride', showToast)
 
     return (
         <div className="relative w-screen" style={{height: 'calc(100vh - 72px)'}}>
@@ -110,7 +117,7 @@ export default function Driver() {
                     </>
                 )}
             </Map>
-            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white'>
                 {showToast && (
                     <Toast
                         type="info"
@@ -125,10 +132,25 @@ export default function Driver() {
                             <p>Est time: {ride?.estimatedTime.toFixed(0)} minutes</p>
                         </div>
                         <div className='flex justify-around p-4'>
-                            <button onClick={() => handleChangeStatusRide(true)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Accept</button>
+                            <button onClick={() => handleChangeStatusRide(RideStatus.IN_PROGRESS)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Accept</button>
                             <button onClick={handleChangeStatusRide} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
                         </div>
                     </Toast>
+                )}
+                {!showToast && ride && (
+                    <>
+                        <div className='p-4'>
+                            <p>Distance: {ride?.distance.toFixed(2)} km</p>
+                            <p>Pickup: {ride?.pickupAddress}</p>
+                            <p>Drop off: {ride?.dropoffAddress}</p>
+                            <p>Price: {ride?.price.toFixed(1)} $</p>
+                            <p>Est time: {ride?.estimatedTime.toFixed(0)} minutes</p>
+                        </div>
+                        <div className='flex justify-around p-4'>
+                            <button onClick={() => handleChangeStatusRide(RideStatus.FINISHED)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Finish</button>
+                            <button onClick={() => handleChangeStatusRide(RideStatus.CANCELLED)} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

@@ -50,16 +50,6 @@ export const ridesRouter = createTRPCRouter({
       return newRide;
     }),
 
-  cancel: publicProcedure
-    .input(idSchema)
-    .mutation(async ({ ctx, input }) => {
-      const ride = await ctx.db.ride.update({
-        where: { id: input.id },
-        data: { status: RideStatus.CANCELLED }
-      });
-      return ride;
-    }),
-
   updateStatusAndDriver: publicProcedure
     .input(z.object({
       rideId: z.string(),
@@ -70,8 +60,23 @@ export const ridesRouter = createTRPCRouter({
       const { rideId, status, driverId } = input;
 
       const data: Partial<Ride> = {};
-      if (status) data.status = status;
-      if (driverId) data.driverId = driverId;
+      if (status) {
+        data.status = status;
+        if (status !== RideStatus.REJECTED && driverId) {
+          const driver = await ctx.db.user.findUnique({
+            where: { id: driverId },
+          });
+
+          await pusher.trigger("goober", `ride-${rideId}`, {
+            id: rideId,
+            status,
+            driverName: driver?.name, 
+          });
+        }
+      }
+      if (driverId) {
+        data.driverId = driverId;
+      }
 
       const ride = await ctx.db.ride.update({
         where: { id: rideId },
