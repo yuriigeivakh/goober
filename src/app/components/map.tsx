@@ -12,7 +12,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { MarkerSvg, TargetLocationSvg } from '../assets';
 import RouteAndAddressInfo from './RouteAndAddressInfo';
 import CarRouteLayer from './CarRouteLayer';
-import MarkersLayer from './MarkersLayer';
 import { getPrice } from '../utils';
 import pusher from '../lib/pusher';
 import { RideStatus } from '@prisma/client';

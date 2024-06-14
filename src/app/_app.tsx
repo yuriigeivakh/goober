@@ -3,7 +3,7 @@ import { fonts } from './lib/fonts'
 import { theme } from './theme'
 import Layout from "./layout";
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps }: {Component: any, pageProps: any}) {
     console.warn('my app')
   return (
     <>
