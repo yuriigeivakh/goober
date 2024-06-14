@@ -26,9 +26,9 @@ const RouteAndAddressInfo: React.FC<RouteAndAddressInfoProps> = ({
   dropOffLocationRef,
 }) => {
   return (
-    <div className="absolute bottom-0 left-0 p-4 bg-white shadow-lg z-10 w-full">
+    <>
       {routeDistance && routeDuration && (
-        <div className="mt-2 p-2 bg-gray-100 rounded">
+        <div className="mt-2 mb-2 p-2 bg-gray-100 rounded">
           <div>Distance: {routeDistance.toFixed(1)} km</div>
           <div>Approximate Time: {routeDuration.toFixed(0)} minutes</div>
           <div>Price: {getPrice(routeDistance, routeDuration).toFixed(1)}$</div>
@@ -42,7 +42,7 @@ const RouteAndAddressInfo: React.FC<RouteAndAddressInfoProps> = ({
             onChange={handleStartLocationChange}
             value={startAddress}
             autoComplete="street-address"
-            className="p-2 border rounded"
+            className="p-2 border rounded w-full"
           />
         </AddressAutofill>
         <AddressAutofill accessToken={accessToken} onRetrieve={handleRetrieveAutocompleteAddress}>
@@ -51,12 +51,12 @@ const RouteAndAddressInfo: React.FC<RouteAndAddressInfoProps> = ({
             placeholder="Where to go?"
             onChange={handleDropoffLocationChange}
             value={dropOffAddress}
-            className="p-2 border rounded"
+            className="p-2 border rounded w-full"
             ref={dropOffLocationRef}
           />
         </AddressAutofill>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -256,21 +256,26 @@ const MapPage = ({ userId }: { userId?: string }) => {
         <div onClick={initialize} className='absolute right-4 top-4 cursor-pointer flex flex-col p-4 rounded-full bg-white'>
           <TargetLocationSvg/>
         </div>
-        {userId && (
-          <RouteAndAddressInfo
-            accessToken={mapboxgl.accessToken}
-            routeDistance={routeDistance}
-            routeDuration={routeDuration}
-            startAddress={startAddress}
-            dropOffAddress={dropOffAddress}
-            handleStartLocationChange={handleStartLocationChange}
-            handleDropoffLocationChange={handleDropoffLocationChange}
-            handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
-            dropOffLocationRef={dropOffLocationRef}
-          />
-        )}
-        {/* <button onClick={handleCreateRide}>Confirm</button> */}
-        <button className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
+        <div className="absolute bottom-0 left-0 p-4 bg-white shadow-lg z-10 w-full">
+          {userId && (
+            <>
+              <RouteAndAddressInfo
+                accessToken={mapboxgl.accessToken}
+                routeDistance={routeDistance}
+                routeDuration={routeDuration}
+                startAddress={startAddress}
+                dropOffAddress={dropOffAddress}
+                handleStartLocationChange={handleStartLocationChange}
+                handleDropoffLocationChange={handleDropoffLocationChange}
+                handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
+                dropOffLocationRef={dropOffLocationRef}
+              />
+              {startAddress && dropOffAddress && (
+                <button className="text-white mt-2 w-full bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
+              )}
+            </>
+          )}
+        </div>
       </>
     );
   };
