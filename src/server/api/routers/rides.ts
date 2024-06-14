@@ -60,16 +60,24 @@ export const ridesRouter = createTRPCRouter({
       return ride;
     }),
 
-  acceptAsDriver: publicProcedure
-    .input(z.object({ rideId: z.string(), driverId: z.string() }))
+  updateStatusAndDriver: publicProcedure
+    .input(z.object({
+      rideId: z.string(),
+      status: z.nativeEnum(RideStatus).optional(),
+      driverId: z.string().optional()
+    }))
     .mutation(async ({ ctx, input }) => {
+      const { rideId, status, driverId } = input;
+
+      const data: Partial<Ride> = {};
+      if (status) data.status = status;
+      if (driverId) data.driverId = driverId;
+
       const ride = await ctx.db.ride.update({
-        where: { id: input.rideId },
-        data: {
-          driverId: input.driverId,
-          status: RideStatus.IN_PROGRESS,
-        }
+        where: { id: rideId },
+        data,
       });
+
       return ride;
     }),
 

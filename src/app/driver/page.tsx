@@ -1,11 +1,12 @@
 'use client'
 import Map, { Marker } from 'react-map-gl';
 
-import { api } from "@goober/trpc/server";
+import { api } from "@goober/trpc/react";
 import { CreateUser } from "../components/create-user";
 import { useEffect, useState } from 'react';
 import Pusher from 'pusher-js';
 import Toast from '../components/Toast';
+import { RideStatus } from '@prisma/client';
 
 interface Ride {
     id: string
@@ -29,11 +30,6 @@ export default function Driver() {
     const [driverLocation, setDriverLocation] = useState<[number, number] | null>(null)
     const [showToast, setShowToast] = useState(false);
     const [ride, setRide] = useState<Ride | null>(null)
-
-    // const fetchRides = async (userId: string) => {
-    //     const user = await api.rides.get();
-    //     setName(user?.name)
-    // }
 
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_ID, {
         cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
@@ -65,6 +61,15 @@ export default function Driver() {
           });
         });
     }
+
+    const updatedRideStatus = api.rides.updateStatusAndDriver.useMutation({
+        onSuccess: async (data) => {
+            console.warn('success')
+        },
+        onError: (error) => {
+            console.error(error)
+        }
+    });
   
     useEffect(() => {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -74,6 +79,15 @@ export default function Driver() {
     const handleCloseToast = () => {
         setShowToast(false);
     };
+
+    const handleChangeStatusRide = async (isApproved?: boolean) => {
+        await updatedRideStatus.mutate({
+            rideId: ride?.id as string,
+            driverId: '',
+            status: isApproved ? RideStatus.IN_PROGRESS : RideStatus.CANCELLED,
+        });
+        // handleCloseToast()
+    }
 
     return (
         <div className="relative w-screen" style={{height: 'calc(100vh - 72px)'}}>
@@ -104,18 +118,18 @@ export default function Driver() {
                     <Toast
                         type="info"
                         message='New order'
-                        onClose={handleCloseToast}
+                        onClose={handleChangeStatusRide}
                     >   
                         <div className='p-4'>
                             <p>Distance: {ride?.distance.toFixed(2)} km</p>
                             <p>Pickup: {ride?.pickupAddress}</p>
                             <p>Drop off: {ride?.dropoffAddress}</p>
-                            <p>Price: {ride?.price.toFixed(2)} $</p>
-                            <p>Est time: {ride?.estimatedTime.toFixed(2)} minutes</p>
+                            <p>Price: {ride?.price.toFixed(1)} $</p>
+                            <p>Est time: {ride?.estimatedTime.toFixed(0)} minutes</p>
                         </div>
                         <div className='flex justify-around p-4'>
-                            <button className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Accept</button>
-                            <button className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
+                            <button onClick={() => handleChangeStatusRide(true)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Accept</button>
+                            <button onClick={handleChangeStatusRide} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
                         </div>
                     </Toast>
                 )}
