@@ -9,7 +9,7 @@ export const useCurrentUser = () => {
 
   const fetchUser = async () => {
     const userData = await getIndexedDBUser();
-    setUser(userData);
+    setUser(userData as any);
   };
 
   useEffect(() => {

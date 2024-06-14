@@ -21,7 +21,7 @@ export function CreateUser() {
   
   useEffect(() => {
     createUserRef.current && autoAnimate(createUserRef.current)
-  }, [parent])
+  }, [createUserRef])
 
   const createPost = api.users.create.useMutation({
     onMutate: () => {

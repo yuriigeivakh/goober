@@ -92,7 +92,7 @@ const MapPage = ({ userId }: { userId?: string }) => {
     useEffect(() => {
       distanceRef.current && autoAnimate(distanceRef.current)
       dropOffLocationRef.current && autoAnimate(dropOffLocationRef.current)
-    }, [parent])
+    }, [dropOffLocationRef, distanceRef])
 
     const fetchCarRoute = async (startLocation: [number, number], dropoffLocation: [number, number]): Promise<[number, number][]> => {
       try {
@@ -145,15 +145,16 @@ const MapPage = ({ userId }: { userId?: string }) => {
     };
 
     const handleRetrieveAutocompleteAddress = async (res: any, isStart?: boolean) => {
-      const address = res?.features?.[0]?.properties
+      console.warn(res, 'address')
+      const address = res
 
       if (isStart) {
-        setStartAddress(address?.address_line1)
+        setStartAddress(res)
         setIsStartAddressValidated(true)
       } else {
-        setDropOffAddress(address?.address_line1)
+        setDropOffAddress(res)
         setIsDropOffAddressValidated(true)
-        await handleDropOffLocationUpdate(address?.full_address)
+        await handleDropOffLocationUpdate(res)
       }
     }
   
@@ -164,6 +165,7 @@ const MapPage = ({ userId }: { userId?: string }) => {
   
     const handleDropoffLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setDropOffAddress(e.target.value)
+      console.warn(e.target.value)
       setIsDropOffAddressValidated(false)
     };
 
@@ -347,7 +349,7 @@ const MapPage = ({ userId }: { userId?: string }) => {
               </div>
               {startAddress && dropOffAddress && (
                 <button ref={buttonSubmit} className="text-white mt-2 w-full bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
-              )}
+              )} 
             </>
           )}
         </div>
