@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import Pusher from 'pusher-js';
 import Toast from '../components/Toast';
 import { RideStatus } from '@prisma/client';
+import { useCurrentUser } from '../hooks/useUser';
+import pusher from '../lib/pusher';
 
 interface Ride {
     id: string
@@ -30,17 +32,12 @@ export default function Driver() {
     const [driverLocation, setDriverLocation] = useState<[number, number] | null>(null)
     const [showToast, setShowToast] = useState(false);
     const [ride, setRide] = useState<Ride | null>(null)
-
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_ID, {
-        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
-    });
+    const user = useCurrentUser();
 
     useEffect(() => {
         const channel = pusher.subscribe("goober"); 
 
         channel.bind("ride", function (data: any) {
-            console.warn(data, 'data')
-            const newRide = JSON.stringify(data)
             setRide(data)
             setShowToast(true)
         });
@@ -83,7 +80,7 @@ export default function Driver() {
     const handleChangeStatusRide = async (isApproved?: boolean) => {
         await updatedRideStatus.mutate({
             rideId: ride?.id as string,
-            driverId: '',
+            driverId: user?.id,
             status: isApproved ? RideStatus.IN_PROGRESS : RideStatus.CANCELLED,
         });
         // handleCloseToast()
