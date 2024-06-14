@@ -1,6 +1,6 @@
 "use client";
 
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { api } from "@goober/trpc/react";
@@ -23,11 +23,13 @@ export function CreateUser() {
       setShowToast(false)
     },
     onSuccess: async (user) => {
-      router.refresh();
       setName("");
       setRole(UserRole.RIDER);
       const userData = { id: String(user.id), name: user.name, role: user.role };
       await setIndexedDBUser(userData);
+      if (user.role === UserRole.DRIVER) {
+        router.push('/driver')
+      }
     },
     onError: (error) => {
       const errorParsed = JSON.parse(error.message)

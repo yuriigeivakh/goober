@@ -28,7 +28,6 @@ export const ridesRouter = createTRPCRouter({
       dropoffLat: z.number(),
       dropoffLong: z.number(),
     })).mutation(async ({ ctx, input }) => {
-      console.warn(input, 'input')
       const newRide = await ctx.db.ride.create({
         data: {
           userId: input.userId, 
@@ -46,9 +45,7 @@ export const ridesRouter = createTRPCRouter({
         }
       });
 
-      console.warn('before')
       await pusher.trigger("goober", "ride", newRide);
-      console.warn('after')
 
       return newRide;
     }),

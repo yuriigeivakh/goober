@@ -185,19 +185,15 @@ const MapPage = ({ userId }: { userId?: string }) => {
         console.warn(userId, getPrice(routeDistance, routeDuration), routeDistance, routeDuration, startAddress)
         await createRide.mutate({
           userId: userId,
-          price: 8,
-          distance: 4,
-          estimatedTime: 5,
+          price: getPrice(routeDistance, routeDuration),
+          distance: routeDistance,
+          estimatedTime: routeDuration,
           pickupAddress: startAddress,
-          // pickupLong: startLocation[0],
-          pickupLong: 10,
-          // pickupLat: startLocation[1],
-          pickupLat: 11,
+          pickupLong: startLocation[0],
+          pickupLat: startLocation[1],
           dropoffAddress: dropOffAddress,
-          // dropoffLat: dropoffLocation[1],
-          dropoffLat: 9,
-          // dropoffLong: dropoffLocation[0],
-          dropoffLong: 15,
+          dropoffLat: dropoffLocation[1],
+          dropoffLong: dropoffLocation[0],
         });
       } catch (error) {
         console.error('Error creating ride:', error);
