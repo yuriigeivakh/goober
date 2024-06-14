@@ -15,6 +15,13 @@ enum UserRole {
   DRIVER
 }
 
+enum RideStatus {
+  PENDING
+  IN_PROGRESS
+  CANCELLED
+  FINISHED
+}
+
 model User {
   id               String   @id @default(uuid())
   name             String
@@ -24,14 +31,20 @@ model User {
 }
 
 model Ride {
-  id              String @id @default(uuid())
-  userId          String
-  driverId        String
-  status          String
-  pickupLocation  String
-  dropoffLocation String
-  fare            Float
+  id             String     @id @default(uuid())
+  userId         String
+  driverId       String?
+  status         RideStatus
+  pickupAddress  String
+  dropoffAddress String
+  pickupLong     Float?
+  pickupLat      Float?
+  dropoffLong    Float?
+  dropoffLat     Float?
+  price          Float
+  distance       Float
+  estimatedTime  Float
 
-  driver User @relation(fields: [driverId], references: [id], name: "DriverRides")
-  user   User @relation(fields: [userId], references: [id], name: "PassengerRides")
+  driver User? @relation(fields: [driverId], references: [id], name: "DriverRides")
+  user   User  @relation(fields: [userId], references: [id], name: "PassengerRides")
 }

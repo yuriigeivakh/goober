@@ -2,7 +2,6 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 // import { useEffect, useState } from "react";
-import { api } from "@goober/trpc/server";
 import { type FC, useEffect } from "react";
 import { type UserRole } from "@prisma/client";
 import { Button } from 'primereact/button';

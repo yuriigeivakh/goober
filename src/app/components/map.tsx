@@ -10,16 +10,18 @@ import { MarkerSvg, TargetLocationSvg } from '../assets';
 import RouteAndAddressInfo from './RouteAndAddressInfo';
 import CarRouteLayer from './CarRouteLayer';
 import MarkersLayer from './MarkersLayer';
+import { api } from '@goober/trpc/react';
+import { getPrice } from '../utils';
+// import { Button } from '@chakra-ui/react';
 
 mapboxgl.accessToken =
-  "pk.eyJ1IjoieXVyYWdleXZha2giLCJhIjoiY2sxMGVwenkyMDU0OTNicnVydGxzazdtMSJ9.bbUoknjVHBB3Ma6ZeyZN0g";
+  process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-
-const MapPage = () => {
+const MapPage = ({ userId }: { userId?: string }) => {
     const [viewport, setViewport] = useState({
       latitude: 37.7749,
       longitude: -122.4194,
-      zoom: 12
+      zoom: 5
     });
   
     const dropOffLocationRef = useRef()
@@ -41,6 +43,7 @@ const MapPage = () => {
       navigator.geolocation.getCurrentPosition(async (position: any) => {
         const { latitude, longitude } = position.coords;
         const address = await fetchAddress(latitude, longitude);
+        console.warn(latitude, longitude, 'rider')
         setStartAddress(address);
         setUserLocation([longitude, latitude]);
         setViewport({
@@ -161,13 +164,49 @@ const MapPage = () => {
     };
 
     const handleMapClick = async ({ lngLat }) => {
+      if (!userId) return
+
       const address = await fetchAddress(lngLat.lat, lngLat.lng)
       setDropOffAddress(address)
       await handleDropOffLocationUpdate(address)
     }
+
+    const createRide = api.rides.create.useMutation({
+      onSuccess: async (data) => {
+        // alert(data)
+      },
+      onError: (error) => {
+        console.error(error)
+      }
+    });
+
+    const handleCreateRide = async () => {
+      try {
+        console.warn(userId, getPrice(routeDistance, routeDuration), routeDistance, routeDuration, startAddress)
+        await createRide.mutate({
+          userId: userId,
+          price: 8,
+          distance: 4,
+          estimatedTime: 5,
+          pickupAddress: startAddress,
+          // pickupLong: startLocation[0],
+          pickupLong: 10,
+          // pickupLat: startLocation[1],
+          pickupLat: 11,
+          dropoffAddress: dropOffAddress,
+          // dropoffLat: dropoffLocation[1],
+          dropoffLat: 9,
+          // dropoffLong: dropoffLocation[0],
+          dropoffLong: 15,
+        });
+      } catch (error) {
+        console.error('Error creating ride:', error);
+        alert('Error creating ride. Please try again.');
+      }
+    };
   
     return (
-      <div className="relative h-screen w-screen">
+      <>
         <Map
           {...viewport}
           mapboxAccessToken={mapboxgl.accessToken}
@@ -188,7 +227,7 @@ const MapPage = () => {
               <div className="bg-blue-500 rounded-full w-4 h-4"></div>
             </Marker>
           )}
-          {startLocation && (
+          {userId && startLocation && (
             <Marker
               latitude={startLocation[1]}
               longitude={startLocation[0]}
@@ -200,7 +239,7 @@ const MapPage = () => {
               </div>
             </Marker>
           )}
-          {dropoffLocation && (
+          {userId && dropoffLocation && (
             <Marker
               latitude={dropoffLocation[1]}
               longitude={dropoffLocation[0]}
@@ -214,19 +253,25 @@ const MapPage = () => {
           )}
           <CarRouteLayer carRoute={carRoute}/>
         </Map>
-        <TargetLocationSvg onClick={initialize}/>
-        <RouteAndAddressInfo
-          accessToken={mapboxgl.accessToken}
-          routeDistance={routeDistance}
-          routeDuration={routeDuration}
-          startAddress={startAddress}
-          dropOffAddress={dropOffAddress}
-          handleStartLocationChange={handleStartLocationChange}
-          handleDropoffLocationChange={handleDropoffLocationChange}
-          handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
-          dropOffLocationRef={dropOffLocationRef}
-        />
-      </div>
+        <div onClick={initialize} className='absolute right-4 top-4 cursor-pointer flex flex-col p-4 rounded-full bg-white'>
+          <TargetLocationSvg/>
+        </div>
+        {userId && (
+          <RouteAndAddressInfo
+            accessToken={mapboxgl.accessToken}
+            routeDistance={routeDistance}
+            routeDuration={routeDuration}
+            startAddress={startAddress}
+            dropOffAddress={dropOffAddress}
+            handleStartLocationChange={handleStartLocationChange}
+            handleDropoffLocationChange={handleDropoffLocationChange}
+            handleRetrieveAutocompleteAddress={handleRetrieveAutocompleteAddress}
+            dropOffLocationRef={dropOffLocationRef}
+          />
+        )}
+        {/* <button onClick={handleCreateRide}>Confirm</button> */}
+        <button className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleCreateRide}>Confirm</button>
+      </>
     );
   };
   

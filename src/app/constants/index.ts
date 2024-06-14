@@ -1,0 +1,1 @@
+export const COMMON_ERROR_MESSAGE = 'Glitch in the Matrix! Try Again'

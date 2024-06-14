@@ -2,17 +2,19 @@
 
 import { redirect, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Input, Select } from '@headlessui/react'
+import { useToast, Select, Input } from '@chakra-ui/react'
 
 import { api } from "@goober/trpc/react";
 import { UserRole } from "@prisma/client";
 import { setIndexedDBUser, setLocalStorage } from "../utils";
 import { useCurrentUser } from "../hooks/useUser";
+import { COMMON_ERROR_MESSAGE } from "../constants";
 
 export function CreateUser() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.RIDER);
+  const toast = useToast()
 
   // const user = useCurrentUser();
   // if (user?.id) {
@@ -28,6 +30,12 @@ export function CreateUser() {
       const userData = { id: String(user.id), name: user.name, role: user.role };
       await setIndexedDBUser(userData);
     },
+    onError: (error) => {
+      toast({
+        title: 'Uh-oh!',
+        description: error?.[0]?.message || COMMON_ERROR_MESSAGE,
+      })
+    }
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
