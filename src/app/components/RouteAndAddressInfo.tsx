@@ -35,6 +35,7 @@ const RouteAndAddressInfo: React.FC<RouteAndAddressInfoProps> = ({
         </div>
       )}
       <div className="flex flex-col space-y-2">
+        {/* @ts-ignore */}
         <AddressAutofill accessToken={accessToken} onRetrieve={(value) => handleRetrieveAutocompleteAddress(value, true)}>
           <input
             type="text"
@@ -45,6 +46,7 @@ const RouteAndAddressInfo: React.FC<RouteAndAddressInfoProps> = ({
             className="p-2 border rounded w-full"
           />
         </AddressAutofill>
+        {/* @ts-ignore */}
         <AddressAutofill accessToken={accessToken} onRetrieve={handleRetrieveAutocompleteAddress}>
           <input
             type="text"

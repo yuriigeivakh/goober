@@ -53,7 +53,7 @@ export default function Driver() {
     }, []);
 
     const initialize = async () => {
-        navigator.geolocation.getCurrentPosition(async (position: any) => {
+        navigator.geolocation.getCurrentPosition((position: any) => {
           const { latitude, longitude } = position.coords;
           setDriverLocation([longitude, latitude]);
           setViewport({
@@ -83,8 +83,7 @@ export default function Driver() {
     };
 
     const handleChangeStatusRide = async (rideStatus: RideStatus = RideStatus.CANCELLED) => {
-        console.warn(rideStatus, 'rideStatus')
-        await updatedRideStatus.mutate({
+        updatedRideStatus.mutate({
             rideId: ride?.id as string,
             driverId: user?.id,
             status: rideStatus,
@@ -153,7 +152,7 @@ export default function Driver() {
                         </div>
                         <div className='flex justify-around p-4'>
                             <button onClick={() => handleChangeStatusRide(RideStatus.IN_PROGRESS)} className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">Accept</button>
-                            <button onClick={handleChangeStatusRide} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
+                            <button onClick={() => handleChangeStatusRide()} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Cancel</button>
                         </div>
                     </Toast>
                 )}

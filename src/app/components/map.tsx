@@ -24,7 +24,7 @@ interface RideInformation {
 }
 
 mapboxgl.accessToken =
-  process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? 'fallback_token_here';
 
 const MapPage = ({ userId }: { userId?: string }) => {
     const [viewport, setViewport] = useState({
@@ -90,8 +90,8 @@ const MapPage = ({ userId }: { userId?: string }) => {
     }, [startLocation, dropoffLocation]);
 
     useEffect(() => {
-      parent.current && autoAnimate(parent.current)
       distanceRef.current && autoAnimate(distanceRef.current)
+      dropOffLocationRef.current && autoAnimate(dropOffLocationRef.current)
     }, [parent])
 
     const fetchCarRoute = async (startLocation: [number, number], dropoffLocation: [number, number]): Promise<[number, number][]> => {
@@ -172,14 +172,15 @@ const MapPage = ({ userId }: { userId?: string }) => {
       setDropoffLocation(coordinates)
     }
   
-    const handleMarkerDragEnd = async (lngLat: mapboxgl.LngLatLike, isStart?: boolean) => {
+    const handleMarkerDragEnd = async (lngLat: any, isStart?: boolean) => {
       const address = await fetchAddress(lngLat.lat, lngLat.lng)
 
       if (isStart) {
         setStartAddress(address)
         setStartLocation([lngLat.lng, lngLat.lat]);
         setIsStartAddressValidated(true)
-        dropOffLocationRef.current.focus()
+        // @ts-ignore
+        dropOffLocationRef?.current?.focus()
       } else {
         console.warn(address, 'address')
         setDropOffAddress(address)
@@ -188,7 +189,7 @@ const MapPage = ({ userId }: { userId?: string }) => {
       }
     };
 
-    const handleMapClick = async ({ lngLat }) => {
+    const handleMapClick = async ({ lngLat }: {lngLat: any}) => {
       if (!userId) return
 
       const address = await fetchAddress(lngLat.lat, lngLat.lng)
@@ -209,19 +210,19 @@ const MapPage = ({ userId }: { userId?: string }) => {
       },
     });
 
-    const handleCreateRide = async () => {
+    const handleCreateRide = () => {
       try {
-        await createRide.mutate({
-          userId: userId,
-          price: getPrice(routeDistance, routeDuration),
-          distance: routeDistance,
-          estimatedTime: routeDuration,
+        createRide.mutate({
+          userId: userId as string,
+          price: getPrice(routeDistance as number, routeDuration as number),
+          distance: routeDistance as number,
+          estimatedTime: routeDuration as number,
           pickupAddress: startAddress,
-          pickupLong: startLocation[0],
-          pickupLat: startLocation[1],
+          pickupLong: startLocation?.[0] as number,
+          pickupLat: startLocation?.[1] as number,
           dropoffAddress: dropOffAddress,
-          dropoffLat: dropoffLocation[1],
-          dropoffLong: dropoffLocation[0],
+          dropoffLat: dropoffLocation?.[1] as number,
+          dropoffLong: dropoffLocation?.[0] as number,
         });
       } catch (error) {
         console.error('Error creating ride:', error);
@@ -238,8 +239,8 @@ const MapPage = ({ userId }: { userId?: string }) => {
       }
     });
 
-    const handleChangeStatusRide = async () => {
-      await updatedRideStatus.mutate({
+    const handleChangeStatusRide = () => {
+      updatedRideStatus.mutate({
         rideId: rideInformation?.id as string,
         status: RideStatus.CANCELLED,
       });
@@ -255,7 +256,6 @@ const MapPage = ({ userId }: { userId?: string }) => {
       setDropOffAddress('')
       setRideCreated(false)
     }
-    console.warn(rideInformation?.status === RideStatus.FINISHED || rideInformation?.status === RideStatus.CANCELLED, userId, 'rideInformation?.status')
   
     return (
       <>
@@ -269,7 +269,6 @@ const MapPage = ({ userId }: { userId?: string }) => {
           zoom={15}
           scrollZoom
           dragRotate={false}
-          ref={mapRef}
         >
           {userLocation && (
             <Marker

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface ToastProps {
     type: 'warning' | 'info';
     message: string;
     onClose: () => void;
+    children?: ReactNode
 }
 
 const Toast: React.FC<ToastProps> = ({ type, message, onClose, children }) => {
