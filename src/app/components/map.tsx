@@ -57,7 +57,7 @@ const MapPage = ({ userId }: { userId?: string }) => {
       navigator.geolocation.getCurrentPosition(async (position: any) => {
         const { latitude, longitude } = position.coords;
         const address = await fetchAddress(latitude, longitude);
-        console.warn(latitude, longitude, 'rider')
+
         setStartAddress(address);
         setUserLocation([longitude, latitude]);
         setViewport({
@@ -182,7 +182,6 @@ const MapPage = ({ userId }: { userId?: string }) => {
         // @ts-ignore
         dropOffLocationRef?.current?.focus()
       } else {
-        console.warn(address, 'address')
         setDropOffAddress(address)
         setIsDropOffAddressValidated(true)
         await handleDropOffLocationUpdate(address)

@@ -4,7 +4,6 @@ import { theme } from './theme'
 import Layout from "./layout";
 
 function MyApp({ Component, pageProps }: {Component: any, pageProps: any}) {
-    console.warn('my app')
   return (
     <>
     {/* <style jsx global>

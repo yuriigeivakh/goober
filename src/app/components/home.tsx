@@ -28,7 +28,6 @@ const Home: FC<HomeProps> = ({ user }) => {
 //     const userIdFromStorage = getLocalStorage('userId')
 //     const nameFromStorage = getLocalStorage('name')
 //     const roleFromStorage = getLocalStorage('role')
-//     console.warn(userIdFromStorage, 'userIdFromStorage')
 //     if (userIdFromStorage) {
 //       return fetchUser(userIdFromStorage)
 //     }
